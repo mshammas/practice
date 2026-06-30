@@ -14,7 +14,16 @@ async def import_youtube(body: YoutubeImportRequest, db: Session = Depends(get_d
     try:
         meta = await download_youtube_async(body.url)
     except Exception as exc:
-        raise HTTPException(status_code=422, detail=f"Download failed: {exc}") from exc
+        msg = str(exc)
+        if "Sign in to confirm" in msg or "bot" in msg.lower():
+            raise HTTPException(
+                status_code=422,
+                detail=(
+                    "YouTube blocks downloads from server IPs. "
+                    "Add this song locally (your Mac), then use Export → Import to transfer it here."
+                ),
+            ) from exc
+        raise HTTPException(status_code=422, detail=f"Download failed: {msg}") from exc
 
     song = Song(
         title=meta["title"],
