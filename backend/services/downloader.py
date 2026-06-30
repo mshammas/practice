@@ -14,13 +14,17 @@ MEDIA_DIR.mkdir(parents=True, exist_ok=True)
 # Render Secret File: add a file at /etc/secrets/yt_cookies.txt in the dashboard.
 _COOKIE_FILE: Path | None = None
 _SECRET_FILE = Path("/etc/secrets/yt_cookies.txt")
+_TMP_COOKIE_FILE = Path("/tmp/yt_cookies.txt")
 if _SECRET_FILE.exists():
-    _COOKIE_FILE = _SECRET_FILE
+    # Copy to /tmp so yt-dlp can write back refreshed cookies (/etc/secrets is read-only)
+    import shutil
+    shutil.copy2(_SECRET_FILE, _TMP_COOKIE_FILE)
+    _COOKIE_FILE = _TMP_COOKIE_FILE
 else:
     _cookie_content = os.environ.get("YOUTUBE_COOKIES", "").strip()
     if _cookie_content:
-        _COOKIE_FILE = Path("/tmp/yt_cookies.txt")
-        _COOKIE_FILE.write_text(_cookie_content)
+        _TMP_COOKIE_FILE.write_text(_cookie_content)
+        _COOKIE_FILE = _TMP_COOKIE_FILE
 
 
 def _build_opts(out_path: Path) -> dict[str, Any]:
