@@ -60,10 +60,10 @@ export function SectionWaveform({ audioUrl, section, onSeek }: Props) {
       barGap: 1,
       barRadius: 2,
       interact: false,
-      volume: 0,
     });
 
     wsRef.current = ws;
+    ws.setVolume(0);
     ws.load(audioUrl);
 
     ws.on("ready", () => {
