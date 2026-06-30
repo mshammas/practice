@@ -28,7 +28,10 @@ export function LibraryPage() {
       const parts = [];
       if (n) parts.push(`${n} imported`);
       if (sk) parts.push(`${sk} already existed`);
-      if (fl) parts.push(`${fl} failed`);
+      if (fl) {
+        const errors = result.failed.map((f: { id: string; error: string }) => f.error).join("; ");
+        parts.push(`${fl} failed: ${errors}`);
+      }
       setImportMessage({ type: fl > 0 && n === 0 ? "err" : "ok", text: parts.join(", ") });
       setTimeout(() => setImportMessage(null), 5000);
     },
