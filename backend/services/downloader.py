@@ -1,12 +1,13 @@
 """yt-dlp wrapper — downloads audio from YouTube and returns metadata."""
 import asyncio
+import os
 from pathlib import Path
 from typing import Any
 
 import yt_dlp
 
-MEDIA_DIR = Path(__file__).parent.parent.parent / "media"
-MEDIA_DIR.mkdir(exist_ok=True)
+MEDIA_DIR = Path(os.environ.get("MEDIA_DIR", Path(__file__).parent.parent.parent / "media"))
+MEDIA_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def _build_opts(out_path: Path) -> dict[str, Any]:

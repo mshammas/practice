@@ -225,3 +225,52 @@ POST   /api/import                        multipart zip → {imported, skipped, 
 - Branch: `main`
 - Remote URL: `git@github-mshammas:mshammas/practice.git` (uses SSH alias `github-mshammas` from `~/.ssh/config`)
 - Push command: `git push origin main` (remote is already configured correctly)
+
+---
+
+## Deployment
+
+**Target domain:** `practice.shammas.in`
+
+### Architecture
+```
+Browser → practice.shammas.in  (Vercel — frontend)
+                ↓ API calls
+        songpractice-api.onrender.com  (Render — backend)
+```
+
+### Backend — Render
+1. Go to https://render.com → New → Web Service → connect `mshammas/practice`
+2. Render auto-detects `render.yaml` at the repo root — no manual config needed
+3. After deploy, note the service URL (e.g. `https://songpractice-api.onrender.com`)
+4. If the URL differs from the default, update `ALLOWED_ORIGINS` in `render.yaml` and redeploy
+
+> **Persistent disk required:** `render.yaml` provisions a 1 GB disk at `/data` for the SQLite DB and audio files. This needs Render's Starter plan ($7/month). The free plan has ephemeral storage — data is lost on every restart.
+
+### Frontend — Vercel
+1. Go to https://vercel.com → New Project → import `mshammas/practice`
+2. Set **Root Directory** to `frontend`
+3. Add environment variable: `VITE_API_BASE_URL` = your Render service URL (e.g. `https://songpractice-api.onrender.com`)
+4. Deploy — Vercel auto-detects Vite, `frontend/vercel.json` handles SPA routing
+5. Project Settings → Domains → add `practice.shammas.in`
+
+### DNS (shammas.in)
+Add a CNAME record at your DNS provider:
+```
+practice    CNAME    cname.vercel-dns.com
+```
+Vercel provisions an SSL certificate automatically.
+
+### Environment variables
+| Where | Variable | Value |
+|-------|----------|-------|
+| Render | `DATA_DIR` | `/data/db` |
+| Render | `MEDIA_DIR` | `/data/media` |
+| Render | `ALLOWED_ORIGINS` | `https://practice.shammas.in` |
+| Vercel | `VITE_API_BASE_URL` | `https://songpractice-api.onrender.com` |
+
+### Post-deploy checklist
+- [ ] `https://<render-url>/api/health` returns `{"status":"ok"}`
+- [ ] `https://practice.shammas.in` loads the library page
+- [ ] YouTube import works end-to-end
+- [ ] Export/import zip round-trip works

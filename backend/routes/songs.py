@@ -1,3 +1,4 @@
+import os
 import shutil
 import uuid
 from pathlib import Path
@@ -13,8 +14,8 @@ from schemas import SongOut
 
 router = APIRouter(prefix="/api/songs", tags=["songs"])
 
-MEDIA_DIR = Path(__file__).parent.parent.parent / "media"
-MEDIA_DIR.mkdir(exist_ok=True)
+MEDIA_DIR = Path(os.environ.get("MEDIA_DIR", Path(__file__).parent.parent.parent / "media"))
+MEDIA_DIR.mkdir(parents=True, exist_ok=True)
 
 ALLOWED_AUDIO_EXTENSIONS = {".mp3", ".mp4", ".wav", ".m4a", ".ogg", ".flac", ".aac", ".webm"}
 

@@ -1,6 +1,7 @@
 """Export all songs (+ sections) as a ZIP. Import from a previously exported ZIP."""
 import io
 import json
+import os
 import zipfile
 from pathlib import Path
 
@@ -10,11 +11,9 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from models import Section, Song
-from services.downloader import download_youtube_async
+from services.downloader import MEDIA_DIR, download_youtube_async
 
 router = APIRouter(prefix="/api", tags=["export/import"])
-
-MEDIA_DIR = Path(__file__).parent.parent.parent / "media"
 EXPORT_VERSION = "1"
 
 
