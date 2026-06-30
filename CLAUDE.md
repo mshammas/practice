@@ -223,3 +223,5 @@ POST   /api/import                        multipart zip → {imported, skipped, 
 ## GitHub
 - Repo: https://github.com/mshammas/practice
 - Branch: `main`
+- Remote URL: `git@github-mshammas:mshammas/practice.git` (uses SSH alias `github-mshammas` from `~/.ssh/config`)
+- Push command: `git push origin main` (remote is already configured correctly)
