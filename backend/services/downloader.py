@@ -31,8 +31,9 @@ def _build_opts(out_path: Path) -> dict[str, Any]:
                 "preferredquality": "192",
             }
         ],
-        # tv_embedded bypasses bot detection and has standard formats; ios is fallback
-        "extractor_args": {"youtube": {"player_client": ["tv_embedded", "ios", "web"]}},
+        # ios is the only client that bypasses YouTube bot detection on datacenter IPs;
+        # other clients cause auth errors that abort extraction before ios can succeed
+        "extractor_args": {"youtube": {"player_client": ["ios"]}},
         "quiet": True,
         "no_warnings": False,
     }
