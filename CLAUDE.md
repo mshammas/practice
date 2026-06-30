@@ -201,8 +201,8 @@ POST   /api/import                        multipart zip → {imported, skipped, 
 - Muted second WaveSurfer instance; playhead is a CSS overlay synced to currentTime from Zustand
 
 ### Export / Import
-- **Export**: `GET /api/export` → zip containing `songs.json` + audio files for local-upload songs. YouTube songs just store the source URL.
-- **Import**: `POST /api/import` with zip → YouTube songs re-downloaded via yt-dlp; local audio extracted from zip. Songs already in DB (matched by ID) are skipped. Full section data, practice counts, and mastered flags are preserved.
+- **Export**: `GET /api/export` → zip containing `songs.json` + audio files for ALL songs (including YouTube). Audio is always bundled so import never needs to re-download.
+- **Import**: `POST /api/import` with zip → uses bundled audio from zip. Songs already in DB (matched by ID) are skipped. Full section data, practice counts, and mastered flags are preserved.
 
 ### Responsive layout
 - **Desktop (≥ 1024px)**: waveforms on left, sections sidebar on right
@@ -212,6 +212,8 @@ POST   /api/import                        multipart zip → {imported, skipped, 
 
 ## Known gotchas
 
+- **YouTube import blocked on Render**: Render's datacenter IP is blocked by YouTube bot detection. YouTube import only works locally (Mac). The recommended workflow is: add songs locally → Export → Import ZIP to production. The ZIP now bundles the MP3 so no re-download is needed on import.
+- **YouTube cookies**: `/etc/secrets/yt_cookies.txt` is mounted as a Render Secret File (combined youtube.com + google.com cookies). The code copies it to `/tmp` on startup since `/etc/secrets` is read-only. Even with valid cookies, YouTube blocks datacenter IPs — cookies alone are not sufficient.
 - **yt-dlp version**: Pin to `>=2026.6.9`. Older versions (e.g. 2024.12.13) fail signature extraction — YouTube changes break them. Run `pip install -U yt-dlp` if downloads start failing.
 - **ffmpeg required**: yt-dlp postprocessor converts to MP3 192kbps. Missing ffmpeg causes download failures.
 - **React StrictMode**: WaveSurfer `useEffect` init runs twice in dev. Fixed by using `isReadyRef` guard and nulling refs in cleanup.
