@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from models import Section, Song
-from services.downloader import MEDIA_DIR, download_youtube_async
+from services.downloader import MEDIA_DIR
 
 router = APIRouter(prefix="/api", tags=["export/import"])
 EXPORT_VERSION = "1"
@@ -54,7 +54,8 @@ def export_library(db: Session = Depends(get_db)):
         songs_data = []
         for song in songs:
             d = _song_to_dict(song)
-            if song.source_type == "local":
+            # Always bundle the audio file — YouTube songs too, so import never needs to re-download
+            if song.audio_path:
                 audio_path = Path(song.audio_path)
                 if audio_path.exists():
                     filename = f"audio/{song.id}{audio_path.suffix}"
@@ -96,11 +97,8 @@ async def import_library(file: UploadFile = File(...), db: Session = Depends(get
             continue
 
         try:
-            # Determine audio path
-            if song_data["source_type"] == "youtube" and song_data.get("source_url"):
-                meta = await download_youtube_async(song_data["source_url"])
-                audio_path = meta["audio_path"]
-            elif song_data.get("audio_filename"):
+            # Determine audio path — prefer bundled audio, fall back to re-download
+            if song_data.get("audio_filename"):
                 audio_bytes = zf.read(song_data["audio_filename"])
                 dest = MEDIA_DIR / Path(song_data["audio_filename"]).name
                 dest.write_bytes(audio_bytes)
