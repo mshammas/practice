@@ -31,3 +31,16 @@ app.include_router(export_import.router)
 @app.get("/api/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/api/debug/yt-cookies")
+def debug_yt_cookies():
+    from services.downloader import _COOKIE_FILE, _cookie_content
+    return {
+        "env_var_set": bool(os.environ.get("YOUTUBE_COOKIES")),
+        "content_length": len(_cookie_content),
+        "cookie_file_path": str(_COOKIE_FILE) if _COOKIE_FILE else None,
+        "cookie_file_exists": _COOKIE_FILE.exists() if _COOKIE_FILE else False,
+        "cookie_file_bytes": _COOKIE_FILE.stat().st_size if (_COOKIE_FILE and _COOKIE_FILE.exists()) else 0,
+        "first_line": _cookie_content.splitlines()[0] if _cookie_content else None,
+    }
