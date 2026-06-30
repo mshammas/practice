@@ -31,7 +31,8 @@ def _build_opts(out_path: Path) -> dict[str, Any]:
                 "preferredquality": "192",
             }
         ],
-        "extractor_args": {"youtube": {"player_client": ["ios", "android_vr", "web"]}},
+        # tv_embedded bypasses bot detection and has standard formats; ios is fallback
+        "extractor_args": {"youtube": {"player_client": ["tv_embedded", "ios", "web"]}},
         "quiet": True,
         "no_warnings": False,
     }
