@@ -78,6 +78,8 @@ async def stream_audio(song_id: str, request: Request, db: Session = Depends(get
     if not song:
         raise HTTPException(status_code=404, detail="Song not found")
 
+    if not song.audio_path:
+        raise HTTPException(status_code=404, detail="No audio file associated with this song")
     path = Path(song.audio_path)
     if not path.exists():
         raise HTTPException(status_code=404, detail="Audio file not found on disk")
