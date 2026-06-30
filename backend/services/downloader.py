@@ -22,8 +22,8 @@ def _build_opts(out_path: Path) -> dict[str, Any]:
                 "preferredquality": "192",
             }
         ],
-        # Use node.js for JS-based signature extraction (avoids missing-format warnings)
-        "extractor_args": {"youtube": {"player_client": ["android_vr", "web"]}},
+        # ios client bypasses bot detection on datacenter IPs better than android_vr
+        "extractor_args": {"youtube": {"player_client": ["ios", "android_vr", "web"]}},
         "quiet": True,
         "no_warnings": False,
     }
