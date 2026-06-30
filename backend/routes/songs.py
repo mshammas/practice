@@ -65,9 +65,10 @@ def delete_song(song_id: str, db: Session = Depends(get_db)):
     song = db.get(Song, song_id)
     if not song:
         raise HTTPException(status_code=404, detail="Song not found")
-    audio = Path(song.audio_path)
-    if audio.exists():
-        audio.unlink()
+    if song.audio_path:
+        audio = Path(song.audio_path)
+        if audio.exists() and audio.is_file():
+            audio.unlink()
     db.delete(song)
     db.commit()
 
