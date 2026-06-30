@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 
 from database import get_db
 from models import Song
-from schemas import SongOut
+from schemas import SongOut, SongUpdate
 
 router = APIRouter(prefix="/api/songs", tags=["songs"])
 
@@ -55,6 +55,18 @@ async def import_file(file: UploadFile = File(...), db: Session = Depends(get_db
         audio_path=str(dest),
     )
     db.add(song)
+    db.commit()
+    db.refresh(song)
+    return song
+
+
+@router.put("/{song_id}", response_model=SongOut)
+def update_song(song_id: str, body: SongUpdate, db: Session = Depends(get_db)):
+    song = db.get(Song, song_id)
+    if not song:
+        raise HTTPException(status_code=404, detail="Song not found")
+    for field, value in body.model_dump(exclude_unset=True).items():
+        setattr(song, field, value)
     db.commit()
     db.refresh(song)
     return song

@@ -9,6 +9,7 @@ import type { Song } from "../types";
 export function LibraryPage() {
   const [showImport, setShowImport] = useState(false);
   const [importMessage, setImportMessage] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [search, setSearch] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -17,6 +18,15 @@ export function LibraryPage() {
     queryKey: ["songs"],
     queryFn: api.songs.list,
   });
+
+  const q = search.trim().toLowerCase();
+  const filtered = q
+    ? songs.filter((s) =>
+        [s.title, s.artist, s.composer, s.lyricist, s.album, s.language, s.tags]
+          .filter(Boolean)
+          .some((f) => f!.toLowerCase().includes(q))
+      )
+    : songs;
 
   const importMutation = useMutation({
     mutationFn: (file: File) => api.library.import(file),
@@ -51,7 +61,6 @@ export function LibraryPage() {
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          {/* Export */}
           <a
             href={api.library.exportUrl()}
             download="songpractice-export.zip"
@@ -64,7 +73,6 @@ export function LibraryPage() {
             <span className="sm:hidden">⬆</span>
           </a>
 
-          {/* Import from zip */}
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={importMutation.isPending}
@@ -92,7 +100,6 @@ export function LibraryPage() {
             }}
           />
 
-          {/* Add song */}
           <button
             onClick={() => setShowImport(true)}
             className="bg-brand-600 hover:bg-brand-700 active:bg-brand-800 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
@@ -143,14 +150,32 @@ export function LibraryPage() {
 
         {songs.length > 0 && (
           <>
-            <p className="text-gray-400 text-sm mb-4">
-              {songs.length} song{songs.length !== 1 ? "s" : ""}
-            </p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 lg:gap-4">
-              {songs.map((song) => (
-                <SongCard key={song.id} song={song} />
-              ))}
+            {/* Search bar */}
+            <div className="mb-4">
+              <input
+                type="search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search by title, artist, composer, tags…"
+                className="w-full max-w-md bg-gray-900 border border-gray-700 rounded-xl px-4 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-gray-500"
+              />
             </div>
+
+            <p className="text-gray-400 text-sm mb-4">
+              {q
+                ? `${filtered.length} of ${songs.length} song${songs.length !== 1 ? "s" : ""}`
+                : `${songs.length} song${songs.length !== 1 ? "s" : ""}`}
+            </p>
+
+            {filtered.length === 0 ? (
+              <p className="text-gray-500 text-sm">No songs match "{search}".</p>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3 lg:gap-4">
+                {filtered.map((song) => (
+                  <SongCard key={song.id} song={song} />
+                ))}
+              </div>
+            )}
           </>
         )}
       </main>

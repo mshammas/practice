@@ -1,4 +1,4 @@
-import type { Section, SectionCreate, SectionUpdate, Song } from "../types";
+import type { Section, SectionCreate, SectionUpdate, Song, SongUpdate } from "../types";
 
 const BASE = `${import.meta.env.VITE_API_BASE_URL ?? ""}/api`;
 
@@ -32,6 +32,13 @@ export const api = {
       form.append("file", file);
       return request("/songs/import-file", { method: "POST", body: form });
     },
+
+    update: (id: string, data: SongUpdate): Promise<Song> =>
+      request(`/songs/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      }),
 
     delete: (id: string): Promise<void> =>
       request(`/songs/${id}`, { method: "DELETE" }),

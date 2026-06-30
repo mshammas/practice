@@ -54,8 +54,25 @@ export interface Song {
   thumbnail_url: string | null;
   duration: number | null;
   created_at: string;
+  composer: string | null;
+  lyricist: string | null;
+  album: string | null;
+  year: number | null;
+  language: string | null;
+  tags: string | null;
   sections: Section[];
 }
+
+export type SongUpdate = {
+  title?: string;
+  artist?: string;
+  composer?: string;
+  lyricist?: string;
+  album?: string;
+  year?: number | null;
+  language?: string;
+  tags?: string;
+};
 
 export type SectionCreate = {
   name: string;

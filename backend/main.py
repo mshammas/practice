@@ -2,12 +2,31 @@ import os
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import inspect, text
 
 from database import Base, engine
 from routes import export_import, sections, songs, youtube
 
-# Create all tables on startup
+# Create tables, then add any new columns to existing tables
 Base.metadata.create_all(bind=engine)
+
+def _migrate():
+    inspector = inspect(engine)
+    existing = {c["name"] for c in inspector.get_columns("songs")}
+    new_cols = [
+        ("composer", "TEXT"),
+        ("lyricist", "TEXT"),
+        ("album",    "TEXT"),
+        ("year",     "INTEGER"),
+        ("language", "TEXT"),
+        ("tags",     "TEXT"),
+    ]
+    with engine.begin() as conn:
+        for col, col_type in new_cols:
+            if col not in existing:
+                conn.execute(text(f"ALTER TABLE songs ADD COLUMN {col} {col_type}"))
+
+_migrate()
 
 app = FastAPI(title="Song Practice API", version="1.0.0")
 

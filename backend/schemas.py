@@ -70,9 +70,26 @@ class SongOut(BaseModel):
     thumbnail_url: Optional[str]
     duration: Optional[float]
     created_at: datetime
+    composer: Optional[str] = None
+    lyricist: Optional[str] = None
+    album: Optional[str] = None
+    year: Optional[int] = None
+    language: Optional[str] = None
+    tags: Optional[str] = None
     sections: list[SectionOut] = []
 
     model_config = {"from_attributes": True}
+
+
+class SongUpdate(BaseModel):
+    title: Optional[str] = None
+    artist: Optional[str] = None
+    composer: Optional[str] = None
+    lyricist: Optional[str] = None
+    album: Optional[str] = None
+    year: Optional[int] = None
+    language: Optional[str] = None
+    tags: Optional[str] = None
 
 
 class YoutubeImportRequest(BaseModel):

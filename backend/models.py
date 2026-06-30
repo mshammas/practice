@@ -25,6 +25,13 @@ class Song(Base):
     thumbnail_url = Column(String, nullable=True)
     duration = Column(Float, nullable=True)
     created_at = Column(DateTime, default=_now)
+    # Metadata / credits
+    composer = Column(String, nullable=True)
+    lyricist = Column(String, nullable=True)
+    album = Column(String, nullable=True)
+    year = Column(Integer, nullable=True)
+    language = Column(String, nullable=True)
+    tags = Column(String, nullable=True)  # comma-separated
 
     sections = relationship("Section", back_populates="song", cascade="all, delete-orphan", order_by="Section.order")
 
