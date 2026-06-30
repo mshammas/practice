@@ -236,13 +236,13 @@ POST   /api/import                        multipart zip → {imported, skipped, 
 ```
 Browser → practice.shammas.in  (Vercel — frontend)
                 ↓ API calls
-        practice-g5s9.onrender.com  (Render — backend)
+        practice-or5c.onrender.com  (Render — backend)
 ```
 
 ### Backend — Render
 1. Go to https://render.com → New → Web Service → connect `mshammas/practice`
 2. Render auto-detects `render.yaml` at the repo root — no manual config needed
-3. Render service URL: `https://practice-g5s9.onrender.com`
+3. Render service URL: `https://practice-or5c.onrender.com`
 4. If redeployed with a new URL, update `ALLOWED_ORIGINS` in `render.yaml`
 
 > **Persistent disk required:** `render.yaml` provisions a 1 GB disk at `/data` for the SQLite DB and audio files. This needs Render's Starter plan ($7/month). The free plan has ephemeral storage — data is lost on every restart.
@@ -266,11 +266,11 @@ Vercel provisions an SSL certificate automatically.
 |-------|----------|-------|
 | Render | `DATA_DIR` | `/data/db` |
 | Render | `MEDIA_DIR` | `/data/media` |
-| Render | `ALLOWED_ORIGINS` | `https://practice.shammas.in,https://practice-g5s9.onrender.com` |
-| Vercel | `VITE_API_BASE_URL` | `https://practice-g5s9.onrender.com` |
+| Render | `ALLOWED_ORIGINS` | `https://practice.shammas.in,https://practice-or5c.onrender.com` |
+| Vercel | `VITE_API_BASE_URL` | `https://practice-or5c.onrender.com` |
 
 ### Post-deploy checklist
-- [ ] `https://practice-g5s9.onrender.com/api/health` returns `{"status":"ok"}`
+- [ ] `https://practice-or5c.onrender.com/api/health` returns `{"status":"ok"}`
 - [ ] `https://practice.shammas.in` loads the library page
 - [ ] YouTube import works end-to-end
 - [ ] Export/import zip round-trip works

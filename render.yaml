@@ -14,4 +14,4 @@ services:
       - key: MEDIA_DIR
         value: /data/media
       - key: ALLOWED_ORIGINS
-        value: https://practice.shammas.in,https://practice-g5s9.onrender.com
+        value: https://practice.shammas.in,https://practice-or5c.onrender.com
