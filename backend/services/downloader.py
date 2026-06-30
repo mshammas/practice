@@ -21,8 +21,8 @@ if _cookie_content:
 
 def _build_opts(out_path: Path) -> dict[str, Any]:
     opts: dict[str, Any] = {
-        # Prefer m4a/webm audio-only; fall back to any best available stream
-        "format": "bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best",
+        # bestaudio picks audio-only if available; best catches muxed streams (e.g. ios client)
+        "format": "bestaudio/best",
         "outtmpl": str(out_path / "%(id)s.%(ext)s"),
         "postprocessors": [
             {
