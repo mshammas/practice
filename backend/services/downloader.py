@@ -31,9 +31,9 @@ def _build_opts(out_path: Path) -> dict[str, Any]:
                 "preferredquality": "192",
             }
         ],
-        # ios is the only client that bypasses YouTube bot detection on datacenter IPs;
-        # other clients cause auth errors that abort extraction before ios can succeed
-        "extractor_args": {"youtube": {"player_client": ["ios"]}},
+        # With cookies: use web client — browser cookies are designed for it
+        # Without cookies: use ios which bypasses bot detection on datacenter IPs
+        "extractor_args": {"youtube": {"player_client": ["web" if _COOKIE_FILE else "ios"]}},
         "quiet": True,
         "no_warnings": False,
     }
