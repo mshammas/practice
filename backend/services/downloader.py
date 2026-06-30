@@ -9,9 +9,18 @@ import yt_dlp
 MEDIA_DIR = Path(os.environ.get("MEDIA_DIR", Path(__file__).parent.parent.parent / "media"))
 MEDIA_DIR.mkdir(parents=True, exist_ok=True)
 
+# Write YouTube cookies to disk once at startup if provided via env var.
+# Set YOUTUBE_COOKIES in Render to the full contents of a cookies.txt file
+# exported from a logged-in browser (Netscape format).
+_COOKIE_FILE: Path | None = None
+_cookie_content = os.environ.get("YOUTUBE_COOKIES", "").strip()
+if _cookie_content:
+    _COOKIE_FILE = Path("/tmp/yt_cookies.txt")
+    _COOKIE_FILE.write_text(_cookie_content)
+
 
 def _build_opts(out_path: Path) -> dict[str, Any]:
-    return {
+    opts: dict[str, Any] = {
         # Prefer m4a/webm audio-only; fall back to any best available stream
         "format": "bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best",
         "outtmpl": str(out_path / "%(id)s.%(ext)s"),
@@ -22,11 +31,13 @@ def _build_opts(out_path: Path) -> dict[str, Any]:
                 "preferredquality": "192",
             }
         ],
-        # ios client bypasses bot detection on datacenter IPs better than android_vr
         "extractor_args": {"youtube": {"player_client": ["ios", "android_vr", "web"]}},
         "quiet": True,
         "no_warnings": False,
     }
+    if _COOKIE_FILE:
+        opts["cookiefile"] = str(_COOKIE_FILE)
+    return opts
 
 
 def download_youtube(url: str) -> dict[str, Any]:
