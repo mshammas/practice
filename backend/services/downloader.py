@@ -9,14 +9,18 @@ import yt_dlp
 MEDIA_DIR = Path(os.environ.get("MEDIA_DIR", Path(__file__).parent.parent.parent / "media"))
 MEDIA_DIR.mkdir(parents=True, exist_ok=True)
 
-# Write YouTube cookies to disk once at startup if provided via env var.
-# Set YOUTUBE_COOKIES in Render to the full contents of a cookies.txt file
-# exported from a logged-in browser (Netscape format).
+# Locate YouTube cookies. Prefer a Render Secret File (no env var size limits),
+# fall back to the YOUTUBE_COOKIES env var written to a temp file.
+# Render Secret File: add a file at /etc/secrets/yt_cookies.txt in the dashboard.
 _COOKIE_FILE: Path | None = None
-_cookie_content = os.environ.get("YOUTUBE_COOKIES", "").strip()
-if _cookie_content:
-    _COOKIE_FILE = Path("/tmp/yt_cookies.txt")
-    _COOKIE_FILE.write_text(_cookie_content)
+_SECRET_FILE = Path("/etc/secrets/yt_cookies.txt")
+if _SECRET_FILE.exists():
+    _COOKIE_FILE = _SECRET_FILE
+else:
+    _cookie_content = os.environ.get("YOUTUBE_COOKIES", "").strip()
+    if _cookie_content:
+        _COOKIE_FILE = Path("/tmp/yt_cookies.txt")
+        _COOKIE_FILE.write_text(_cookie_content)
 
 
 def _build_opts(out_path: Path) -> dict[str, Any]:
