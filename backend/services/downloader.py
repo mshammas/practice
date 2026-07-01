@@ -29,7 +29,6 @@ else:
 
 def _build_opts(out_path: Path) -> dict[str, Any]:
     opts: dict[str, Any] = {
-        # bestaudio picks audio-only if available; best catches muxed streams (e.g. ios client)
         "format": "bestaudio/best",
         "outtmpl": str(out_path / "%(id)s.%(ext)s"),
         "postprocessors": [
@@ -39,14 +38,15 @@ def _build_opts(out_path: Path) -> dict[str, Any]:
                 "preferredquality": "192",
             }
         ],
-        # With cookies: use web client — browser cookies are designed for it
-        # Without cookies: use ios which bypasses bot detection on datacenter IPs
-        "extractor_args": {"youtube": {"player_client": ["web" if _COOKIE_FILE else "ios"]}},
         "quiet": True,
         "no_warnings": False,
     }
     if _COOKIE_FILE:
+        # With cookies: pin to web client — browser cookies are designed for it
         opts["cookiefile"] = str(_COOKIE_FILE)
+        opts["extractor_args"] = {"youtube": {"player_client": ["web"]}}
+    # Without cookies (local): leave client unset so yt-dlp tries its default
+    # client sequence (ios → android → web) and picks whichever returns formats
     return opts
 
 

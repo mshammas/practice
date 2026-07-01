@@ -30,6 +30,7 @@ A web app for singers to practice songs by breaking them into named sections (In
 | Database | SQLite via SQLAlchemy (file: `backend/data/songs.db`) |
 | Audio download | yt-dlp ≥ 2026.6.9 (must stay current — YouTube API changes break older versions) |
 | Audio files stored | `media/` directory at repo root |
+| Metadata extraction | Anthropic API (Claude Haiku) + httpx + BeautifulSoup4 — extracts song metadata from an arbitrary URL |
 
 ### Frontend — `frontend/`
 | Component | Choice |
@@ -87,12 +88,13 @@ practice/
 │   ├── models.py             # ORM: Song, Section
 │   ├── schemas.py            # Pydantic schemas, SectionType enum, default colors
 │   ├── routes/
-│   │   ├── songs.py          # Song CRUD + audio streaming (Range header support)
+│   │   ├── songs.py          # Song CRUD + audio streaming (Range header support) + metadata extraction
 │   │   ├── sections.py       # Section CRUD + practiced/mastered endpoints
 │   │   ├── youtube.py        # POST /api/songs/import-youtube
 │   │   └── export_import.py  # GET /api/export, POST /api/import (zip-based)
 │   ├── services/
-│   │   └── downloader.py     # yt-dlp wrapper (async, uses android_vr client)
+│   │   ├── downloader.py     # yt-dlp wrapper (async, uses cookie-aware client selection)
+│   │   └── metadata_extractor.py  # Fetches a URL, parses with BeautifulSoup, asks Claude Haiku for structured song metadata
 │   └── requirements.txt
 ├── frontend/
 │   └── src/
@@ -103,11 +105,12 @@ practice/
 │       ├── api/client.ts     # Typed fetch wrappers for all API endpoints
 │       ├── store/player.ts   # Zustand: activeSection, looping, speed, currentTime, abA, abB
 │       ├── pages/
-│       │   ├── LibraryPage.tsx    # Song grid, Add Song, Export, Import
+│       │   ├── LibraryPage.tsx    # Song grid, search bar, Add Song, Export, Import
 │       │   └── PracticePage.tsx   # Practice view, responsive layout
 │       └── components/
 │           ├── Import/ImportModal.tsx      # YouTube URL + local file upload
-│           ├── Library/SongCard.tsx        # Thumbnail card with delete
+│           ├── Library/SongCard.tsx        # Thumbnail card, tags, edit (pencil) + delete
+│           ├── Library/SongMetadataModal.tsx  # Edit metadata form + "Extract from URL" (Claude-powered autofill)
 │           ├── Player/
 │           │   ├── Waveform.tsx            # Wavesurfer + RegionsPlugin, drag-to-create
 │           │   ├── SectionWaveform.tsx     # Zoomed section view + A/B controls
@@ -133,9 +136,15 @@ practice/
 | artist | TEXT | Nullable |
 | source_type | TEXT | `"youtube"` or `"local"` |
 | source_url | TEXT | YouTube URL; null for local |
-| audio_path | TEXT | Absolute path in `media/` |
+| audio_path | TEXT | Absolute path in `media/`; empty string if audio is missing (e.g. import without bundled audio) |
 | thumbnail_url | TEXT | Nullable |
 | duration | REAL | Seconds |
+| composer | TEXT | Nullable |
+| lyricist | TEXT | Nullable |
+| album | TEXT | Nullable |
+| year | INTEGER | Nullable |
+| language | TEXT | Nullable |
+| tags | TEXT | Nullable; comma-separated |
 | created_at | DATETIME | |
 
 ### Section
@@ -164,8 +173,10 @@ GET    /api/songs                         → Song[]
 GET    /api/songs/{id}                    → Song + sections
 POST   /api/songs/import-youtube          body: {url} → Song
 POST   /api/songs/import-file             multipart  → Song
+PUT    /api/songs/{id}                    body: SongUpdate (title, artist, composer, lyricist, album, year, language, tags) → Song
 DELETE /api/songs/{id}
 GET    /api/songs/{id}/audio              streams audio (Range header supported)
+POST   /api/songs/extract-metadata        body: {url} → extracted metadata dict (requires ANTHROPIC_API_KEY)
 
 POST   /api/songs/{song_id}/sections      body: SectionCreate → Section
 PUT    /api/sections/{id}                 body: SectionUpdate → Section
@@ -201,8 +212,19 @@ POST   /api/import                        multipart zip → {imported, skipped, 
 - Muted second WaveSurfer instance; playhead is a CSS overlay synced to currentTime from Zustand
 
 ### Export / Import
-- **Export**: `GET /api/export` → zip containing `songs.json` + audio files for ALL songs (including YouTube). Audio is always bundled so import never needs to re-download.
-- **Import**: `POST /api/import` with zip → uses bundled audio from zip. Songs already in DB (matched by ID) are skipped. Full section data, practice counts, and mastered flags are preserved.
+- **Export**: `GET /api/export` → zip containing `songs.json` + audio files for ALL songs (including YouTube). Audio is always bundled so import never needs to re-download. `songs.json` includes metadata fields (composer, lyricist, album, year, language, tags).
+- **Import**: `POST /api/import` with zip → uses bundled audio from zip. Songs already in DB (matched by ID) are skipped. Full section data, practice counts, mastered flags, and metadata are preserved.
+
+### Song metadata + search
+- Songs carry optional metadata: composer, lyricist, album, year, language, tags (comma-separated).
+- Library page has a search bar that filters across title, artist, composer, lyricist, album, language, and tags (client-side, case-insensitive substring match).
+- Each `SongCard` has a pencil (✎) button opening `SongMetadataModal` to edit these fields via `PUT /api/songs/{id}`.
+
+### Extract metadata from URL
+- In `SongMetadataModal`, paste a URL (Wikipedia, music database page, etc.) and click **Extract** to auto-fill the form.
+- Calls `POST /api/songs/extract-metadata` → backend fetches the page (httpx), strips it to text (BeautifulSoup), and asks Claude Haiku to return structured JSON metadata.
+- Requires `ANTHROPIC_API_KEY` env var on the backend; returns 503 if unset.
+- Extracted fields are highlighted in the form so the user can review before saving — nothing is auto-saved.
 
 ### Responsive layout
 - **Desktop (≥ 1024px)**: waveforms on left, sections sidebar on right
@@ -269,6 +291,7 @@ Vercel provisions an SSL certificate automatically.
 | Render | `DATA_DIR` | `/data/db` |
 | Render | `MEDIA_DIR` | `/data/media` |
 | Render | `ALLOWED_ORIGINS` | `https://practice.shammas.in,https://practice-or5c.onrender.com` |
+| Render | `ANTHROPIC_API_KEY` | Required for "Extract from URL" metadata feature; without it the endpoint returns 503 |
 | Vercel | `VITE_API_BASE_URL` | `https://practice-or5c.onrender.com` |
 
 ### Post-deploy checklist

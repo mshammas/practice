@@ -44,6 +44,13 @@ export const api = {
       request(`/songs/${id}`, { method: "DELETE" }),
 
     audioUrl: (id: string): string => `${BASE}/songs/${id}/audio`,
+
+    extractMetadata: (url: string): Promise<Record<string, string | number | null>> =>
+      request("/songs/extract-metadata", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      }),
   },
 
   library: {

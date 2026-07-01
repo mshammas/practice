@@ -6,6 +6,7 @@ from pathlib import Path
 import aiofiles
 from fastapi import APIRouter, Depends, File, HTTPException, Request, UploadFile, status
 from fastapi.responses import StreamingResponse
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from database import get_db
@@ -18,6 +19,22 @@ MEDIA_DIR = Path(os.environ.get("MEDIA_DIR", Path(__file__).parent.parent.parent
 MEDIA_DIR.mkdir(parents=True, exist_ok=True)
 
 ALLOWED_AUDIO_EXTENSIONS = {".mp3", ".mp4", ".wav", ".m4a", ".ogg", ".flac", ".aac", ".webm"}
+
+
+class ExtractRequest(BaseModel):
+    url: str
+
+
+@router.post("/extract-metadata")
+async def extract_metadata(body: ExtractRequest):
+    if not os.environ.get("ANTHROPIC_API_KEY"):
+        raise HTTPException(status_code=503, detail="ANTHROPIC_API_KEY not configured on server")
+    try:
+        from services.metadata_extractor import extract_metadata as _extract
+        result = await _extract(body.url)
+        return result
+    except Exception as exc:
+        raise HTTPException(status_code=422, detail=f"Extraction failed: {exc}") from exc
 
 
 @router.get("", response_model=list[SongOut])

@@ -26,6 +26,12 @@ def _song_to_dict(song: Song) -> dict:
         "source_url": song.source_url,
         "thumbnail_url": song.thumbnail_url,
         "duration": song.duration,
+        "composer": song.composer,
+        "lyricist": song.lyricist,
+        "album": song.album,
+        "year": song.year,
+        "language": song.language,
+        "tags": song.tags,
         "audio_filename": None,  # filled in for local songs
         "sections": [
             {
@@ -115,6 +121,12 @@ async def import_library(file: UploadFile = File(...), db: Session = Depends(get
                 source_url=song_data.get("source_url"),
                 thumbnail_url=song_data.get("thumbnail_url"),
                 duration=song_data.get("duration"),
+                composer=song_data.get("composer"),
+                lyricist=song_data.get("lyricist"),
+                album=song_data.get("album"),
+                year=song_data.get("year"),
+                language=song_data.get("language"),
+                tags=song_data.get("tags"),
                 audio_path=audio_path,
             )
             db.add(song)
