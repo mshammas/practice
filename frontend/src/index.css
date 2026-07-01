@@ -5,6 +5,8 @@
 @layer base {
   body {
     @apply bg-gray-950 text-gray-100 antialiased;
+    /* Disable double-tap-to-zoom (accidental layout jumps) while still allowing pinch-zoom */
+    touch-action: manipulation;
   }
 }
 
