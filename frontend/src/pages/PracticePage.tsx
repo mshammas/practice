@@ -12,13 +12,21 @@ import { usePlayerStore } from "../store/player";
 export function PracticePage() {
   const { songId } = useParams<{ songId: string }>();
   const { setWs, playPause, seekTo, skip, isPlaying } = useWavesurfer();
-  const { activeSection, setActiveSection, setIsPlaying, setCurrentTime } = usePlayerStore();
+  const { activeSection, setActiveSection, setIsPlaying, setCurrentTime, currentTime } = usePlayerStore();
 
   const [duration, setDuration] = useState(0);
   const [playing, setPlaying] = useState(false);
   const [localCurrentTime, setLocalCurrentTime] = useState(0);
   const [draftRegion, setDraftRegion] = useState<{ start: number; end: number } | null>(null);
   const [showSections, setShowSections] = useState(false);
+  const [newSectionStart, setNewSectionStart] = useState<number | null>(null);
+
+  const handleAddSection = useCallback(() => {
+    // Capture playhead position at the moment the button is clicked; close the
+    // mobile drawer so the waveform + playback controls are visible to mark the end.
+    setNewSectionStart(currentTime);
+    setShowSections(false);
+  }, [currentTime]);
 
   const { data: song, isLoading, isError } = useQuery({
     queryKey: ["song", songId],
@@ -122,7 +130,7 @@ export function PracticePage() {
             />
           </div>
 
-          {/* Draft section editor */}
+          {/* Draft section editor (drag-to-create on waveform) */}
           {draftRegion && (
             <div className="px-3 pb-2 lg:px-4">
               <SectionEditor
@@ -134,8 +142,20 @@ export function PracticePage() {
             </div>
           )}
 
+          {/* New section editor (triggered via "+ Add Section") — rendered here,
+              next to the waveform/controls, so mobile users can play/pause to set the end */}
+          {newSectionStart !== null && !draftRegion && (
+            <div className="px-3 pb-2 lg:px-4">
+              <SectionEditor
+                songId={song.id}
+                defaultStart={newSectionStart}
+                onClose={() => setNewSectionStart(null)}
+              />
+            </div>
+          )}
+
           {/* Section waveform (active section zoomed view) */}
-          {activeSection && !draftRegion && (
+          {activeSection && !draftRegion && newSectionStart === null && (
             <div className="px-3 pb-2 lg:px-4">
               <SectionWaveform
                 audioUrl={api.songs.audioUrl(song.id)}
@@ -169,6 +189,8 @@ export function PracticePage() {
               song={song}
               activeSectionId={activeSection?.id ?? null}
               onSeek={handleSeek}
+              isAddingSection={newSectionStart !== null}
+              onAddSection={handleAddSection}
             />
           </div>
         </aside>
@@ -197,6 +219,8 @@ export function PracticePage() {
                 song={song}
                 activeSectionId={activeSection?.id ?? null}
                 onSeek={(t) => { handleSeek(t); setShowSections(false); }}
+                isAddingSection={newSectionStart !== null}
+                onAddSection={handleAddSection}
               />
             </div>
           </div>

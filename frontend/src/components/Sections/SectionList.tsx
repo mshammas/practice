@@ -2,46 +2,31 @@ import { useState } from "react";
 import type { Section, Song } from "../../types";
 import { SectionItem } from "./SectionItem";
 import { SectionEditor } from "./SectionEditor";
-import { usePlayerStore } from "../../store/player";
 
 interface Props {
   song: Song;
   activeSectionId: string | null;
   onSeek: (time: number) => void;
+  isAddingSection: boolean;
+  onAddSection: () => void;
 }
 
-export function SectionList({ song, activeSectionId, onSeek }: Props) {
+export function SectionList({ song, activeSectionId, onSeek, isAddingSection, onAddSection }: Props) {
   const [editingSection, setEditingSection] = useState<Section | null>(null);
-  const [addingStart, setAddingStart] = useState<number | null>(null);
-  const { currentTime } = usePlayerStore();
-
-  const handleAddSection = () => {
-    // Capture playhead position at the moment the button is clicked
-    setAddingStart(currentTime);
-  };
 
   return (
     <div className="flex flex-col gap-2 h-full overflow-y-auto scrollbar-thin pr-1">
       {/* Add section button */}
-      {addingStart === null && !editingSection && (
+      {!isAddingSection && !editingSection && (
         <button
-          onClick={handleAddSection}
+          onClick={onAddSection}
           className="w-full border border-dashed border-gray-700 hover:border-brand-500 text-gray-400 hover:text-brand-400 rounded-xl py-2.5 text-sm transition-colors"
         >
           + Add Section
         </button>
       )}
 
-      {/* New section editor — start locked to playhead at click, end updates on pause */}
-      {addingStart !== null && (
-        <SectionEditor
-          songId={song.id}
-          defaultStart={addingStart}
-          onClose={() => setAddingStart(null)}
-        />
-      )}
-
-      {song.sections.length === 0 && addingStart === null && (
+      {song.sections.length === 0 && !isAddingSection && (
         <p className="text-center text-sm text-gray-500 py-8">
           No sections yet.<br />
           <span className="text-xs">Drag on the waveform or click "+ Add Section"</span>
