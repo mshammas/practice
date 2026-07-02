@@ -56,7 +56,10 @@ export function PracticePage() {
 
   const handleSeek = useCallback((time: number) => {
     seekTo(time);
-    const sec = song?.sections.find((s) => time >= s.start_time && time <= s.end_time);
+    // Half-open interval: adjacent sections often share a boundary (one's end_time ==
+    // the next's start_time), so an inclusive end check would always resolve to the
+    // earlier section at that boundary.
+    const sec = song?.sections.find((s) => time >= s.start_time && time < s.end_time);
     setActiveSection(sec ?? null);
   }, [seekTo, song, setActiveSection]);
 
